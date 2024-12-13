@@ -1,4 +1,6 @@
-# 顶会论文自动抓取、LLM总结、推送
+# AutoPapers
+
+> 顶会论文自动抓取、LLM总结、推送
 
 1. 自动抓取顶会论文
 
@@ -29,3 +31,10 @@ python call_llm_summaries.py
 ```bash
 python push2cubox.py
 ```
+
+
+
+# TODO
+
+- [ ] 在推送内容中加入论文的PDF链接
+- [ ] 抓取顶刊论文，如CNS
