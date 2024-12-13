@@ -5,8 +5,7 @@ from magic_pdf.data.dataset import PymuDocDataset
 from magic_pdf.model.doc_analyze_by_custom_model import doc_analyze
 from magic_pdf.config.enums import SupportedPdfParseMethod
 
-
-def convert_pdf_to_md(pdf_path, md_output_dir, max_retries=3):
+def convert_pdf_to_md(pdf_path, md_output_dir, max_retries=3, restart=False):
     """
     Convert a PDF file to Markdown format and save it to the specified directory.
 
@@ -14,6 +13,7 @@ def convert_pdf_to_md(pdf_path, md_output_dir, max_retries=3):
         pdf_path (str): Absolute path to the PDF file to be processed.
         md_output_dir (str): Absolute path to the directory where the Markdown file will be saved.
         max_retries (int): Maximum number of retries for converting the PDF if an error occurs.
+        restart (bool): Whether to force reprocess the PDF even if the Markdown file already exists.
 
     Returns:
         None: If the conversion is successful.
@@ -21,6 +21,12 @@ def convert_pdf_to_md(pdf_path, md_output_dir, max_retries=3):
     """
     pdf_file_name = os.path.basename(pdf_path)  # Extract the file name
     name_without_suff = os.path.splitext(pdf_file_name)[0]  # Remove the file extension
+    md_file_path = os.path.join(md_output_dir, f"{name_without_suff}.md")  # Target Markdown file path
+
+    # Check if the Markdown file already exists
+    if not restart and os.path.exists(md_file_path):
+        print(f"🛫Skipping {pdf_file_name}: Markdown file already exists.")
+        return
 
     # Prepare environment
     local_image_dir = os.path.join(md_output_dir, "images")  # Image output directory
@@ -66,7 +72,7 @@ def convert_pdf_to_md(pdf_path, md_output_dir, max_retries=3):
     print(f"Failed to convert {pdf_file_name} to Markdown after {max_retries} retries.")
 
 
-def batch_convert_pdfs_to_md(pdf_folder, md_output_dir, max_retries=3, max_workers=8):
+def batch_convert_pdfs_to_md(pdf_folder, md_output_dir, max_retries=3, max_workers=8, restart=False):
     """
     Convert all PDF files in a folder to Markdown format using multi-threading.
 
@@ -75,6 +81,7 @@ def batch_convert_pdfs_to_md(pdf_folder, md_output_dir, max_retries=3, max_worke
         md_output_dir (str): Absolute path to the directory where Markdown files will be saved.
         max_retries (int): Maximum number of retries for each PDF conversion.
         max_workers (int): Maximum number of threads to use for parallel processing.
+        restart (bool): Whether to force reprocess all PDFs even if the Markdown files already exist.
 
     Returns:
         None
@@ -93,7 +100,7 @@ def batch_convert_pdfs_to_md(pdf_folder, md_output_dir, max_retries=3, max_worke
     with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
         # Submit tasks for each PDF file
         futures = {
-            executor.submit(convert_pdf_to_md, pdf_file, md_output_dir, max_retries): pdf_file
+            executor.submit(convert_pdf_to_md, pdf_file, md_output_dir, max_retries, restart): pdf_file
             for pdf_file in pdf_files
         }
 
@@ -113,5 +120,6 @@ if __name__ == "__main__":
     md_output_dir = "/data/lyc/papers/ICLR_2024/md"  # Replace with the output folder for Markdown files
     max_retries = 3  # Maximum retries for each PDF conversion
     max_workers = 1  # Number of threads for parallel processing
+    restart = False  # Set to True to force reprocess all files
 
-    batch_convert_pdfs_to_md(pdf_folder, md_output_dir, max_retries, max_workers)
+    batch_convert_pdfs_to_md(pdf_folder, md_output_dir, max_retries, max_workers, restart)
