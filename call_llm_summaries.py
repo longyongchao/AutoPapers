@@ -86,7 +86,7 @@ def preprocess_markdown_content(md_content: str) -> str:
     return partial_content
 
 
-def summarize_markdown_files(md_folder: str, output_folder: str, model: str = 'qwen2.5:72b-32k'):
+def summarize_markdown_files(md_folder: str, output_folder: str, model: str = 'qwen2.5:72b-32k', tag=''):
     """
     遍历指定文件夹中的所有 Markdown 文件，调用 LLM 对其内容进行总结，并保存总结结果。
 
@@ -143,7 +143,7 @@ def summarize_markdown_files(md_folder: str, output_folder: str, model: str = 'q
                 # 保存总结结果
                 with open(output_path, 'w', encoding='utf-8') as f:
                     f.write(md_file.split('.')[0])
-                    f.write("\n\n")
+                    f.write(f"\n\n{tag}\n\n")
                     f.write(summary)
 
                     # 如果有 Abstract 内容，将其追加到文件末尾
@@ -165,6 +165,7 @@ if __name__ == "__main__":
     # 示例路径
     md_folder = "/data/lyc/papers/ICLR_2024/md"  # 替换为 Markdown 文件所在的文件夹路径
     output_folder = "/data/lyc/papers/ICLR_2024/sum"  # 替换为总结结果保存的文件夹路径
+    tag = "ICLR 2024"
     model = "llama3.1:70b-32k"  # 使用的语言模型
 
-    summarize_markdown_files(md_folder, output_folder, model)
+    summarize_markdown_files(md_folder, output_folder, model, tag)
