@@ -1,4 +1,4 @@
-# AutoPapers
+# AutoPapers：实现抖音式碎片时间刷论文
 
 > 顶会论文自动抓取、LLM总结、推送
 
