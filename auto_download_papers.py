@@ -5,12 +5,18 @@ import time
 from tqdm import tqdm
 from urllib.parse import urlparse
 
+# * 已验证会议列表
+# * ICLR+2024
+# * ICML+2024
+# * NeurIPS+2023
+# * AAAI+2024
+
 # Constants
 BASE_API_URL = "https://dblp.org/search/publ/api"
-QUERY = "ICLR+2024"
+QUERY = "ICML+2024"
 MAX_RESULTS = 1000  # Maximum results per request
 OUTPUT_DIR = f"/data/lyc/papers/{QUERY.replace('+', '_')}/pdf"
-USE_SINGLE_THREAD = False  # 是否使用单线程运行
+USE_SINGLE_THREAD = True  # ! 是否使用单线程运行，建议使用单线程模式，多线程容易被封禁
 THREAD_COUNT = 8  # 多线程模式下的线程数
 API_CALL_INTERVAL = 2  # 调用 API 的时间间隔（秒）
 DOWNLOAD_INTERVAL = 1  # 单线程模式下每次下载之间的间隔（秒）
