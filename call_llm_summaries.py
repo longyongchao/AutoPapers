@@ -9,10 +9,9 @@ Your task is to summarize a paper in the field of deep learning.
 Please respond in clear, concise, and easy-to-understand language. 
 Here are my specific requirements:
 
-* The core topic of the paper: Summarize the theme or research question of the paper in one sentence.
-* Main contributions: What problems does the paper solve? What new methods or insights does it propose?
-* Core methods: Describe the main technical methods or algorithms proposed in the paper using simple language.
-* Conclusion: Summarize the overall significance or value of this paper in one sentence.
+* Summarize the theme or research question of the paper in one sentence.
+* Use one sentence to describe the core method of the paper.
+* Briefly explain the key technical terms involved in the paper.
 
 Here is the full content of the paper:
 
@@ -144,12 +143,12 @@ def summarize_markdown_files(md_folder: str, output_folder: str, model: str = 'q
                 with open(output_path, 'w', encoding='utf-8') as f:
                     f.write(md_file.split('.')[0])
                     f.write(f"\n\n{tag}\n\n")
-                    f.write(summary)
 
-                    # 如果有 Abstract 内容，将其追加到文件末尾
                     if abstract_content:
                         f.write("\n\n# Abstract\n")
                         f.write(abstract_content)
+
+                    f.write(summary)
 
                 print(f"✅ [{idx}/{len(md_files)}] Summary saved to: {output_path}")
             else:
