@@ -1,8 +1,6 @@
 import os
 import json
-import random
 import requests
-from datetime import datetime
 from apscheduler.schedulers.blocking import BlockingScheduler
 
 from env import CUBOX_URL
@@ -13,6 +11,7 @@ PROCESSED_FILES_JSON = os.path.join(SUMMARIES_FOLDER, "processed_files.json")  #
 API_URL = CUBOX_URL  # 替换为你的 API 链接
 DEFAULT_FOLDER = f"ICLR 2024"  # 用户自定义收藏夹名称
 MAX_CONTENT_LENGTH = 3000  # API 限制的最大内容长度
+KEYWORDS = ["large language model", "agent", "medical", "clinical"]  # 用户指定的关键词
 
 
 def load_processed_files():
@@ -34,17 +33,19 @@ def save_processed_files(processed_files):
         json.dump(list(processed_files), f, ensure_ascii=False, indent=4)
 
 
-def get_random_files(folder, processed_files, n):
+def get_priority_files(folder, processed_files, n, keywords):
     """
-    从文件夹中随机抽取未处理过的文件。
+    根据关键词优先抽取未处理过的文件。
+    匹配的关键词越多，优先级越高。
 
     Parameters:
         folder (str): 文件夹路径。
         processed_files (set): 已处理文件的集合。
         n (int): 要抽取的文件数量。
+        keywords (list): 关键词列表。
 
     Returns:
-        list: 抽取到的文件列表。
+        list: 按优先级排序的文件列表。
     """
     all_files = [f for f in os.listdir(folder) if f.endswith(".md")]
     unprocessed_files = [f for f in all_files if f not in processed_files]
@@ -53,7 +54,23 @@ def get_random_files(folder, processed_files, n):
         print("No unprocessed files available.")
         return []
 
-    return random.sample(unprocessed_files, min(n, len(unprocessed_files)))
+    # 按关键词优先级对文件进行排序
+    keyword_priority = {file: 0 for file in unprocessed_files}  # 默认优先级为 0（未匹配关键词）
+    for file in unprocessed_files:
+        file_path = os.path.join(folder, file)
+        with open(file_path, "r", encoding="utf-8") as f:
+            content = f.read()
+            for i, keyword in enumerate(keywords):
+                if keyword.lower() in content.lower():  # 忽略大小写匹配
+                    keyword_priority[file] += 1
+
+    # 按优先级排序（优先级值越大越靠前）
+    sorted_files = sorted(unprocessed_files, key=lambda x: keyword_priority[x], reverse=True)
+
+    print(keyword_priority)
+
+    # 返回前 n 个文件
+    return sorted_files[:n]
 
 
 def call_api(file_path, folder):
@@ -106,7 +123,7 @@ def call_api(file_path, folder):
 
 def process_files(n, folder):
     """
-    从 summaries 文件夹中随机抽取 n 个文件并调用 API 上传。
+    从 summaries 文件夹中抽取 n 个文件并调用 API 上传。
 
     Parameters:
         n (int): 要抽取的文件数量。
@@ -115,15 +132,15 @@ def process_files(n, folder):
     # 加载已处理文件
     processed_files = load_processed_files()
 
-    # 获取随机抽取的文件
-    random_files = get_random_files(SUMMARIES_FOLDER, processed_files, n)
+    # 获取按优先级排序的文件
+    priority_files = get_priority_files(SUMMARIES_FOLDER, processed_files, n, KEYWORDS)
 
-    if not random_files:
+    if not priority_files:
         print("No files to process.")
         return
 
     # 处理每个文件
-    for file_name in random_files:
+    for file_name in priority_files:
         file_path = os.path.join(SUMMARIES_FOLDER, file_name)
 
         # 调用 API
@@ -153,8 +170,8 @@ def schedule_task(n, folder, debug=False):
     else:
         scheduler = BlockingScheduler()
 
-        # 每日凌晨 3 点运行
-        scheduler.add_job(process_files, "cron", hour=3, minute=0, args=[n, folder])
+        # 运行后的第7个小时运行
+        scheduler.add_job(process_files, "cron", hour=7, minute=0, args=[n, folder])
 
         print("Scheduler started. Press Ctrl+C to exit.")
         try:
@@ -165,7 +182,7 @@ def schedule_task(n, folder, debug=False):
 
 if __name__ == "__main__":
     # 用户自定义参数
-    n = 10  # 每日抽取的文件数量
+    n = 200  # 每日抽取的文件数量
     folder = DEFAULT_FOLDER  # 收藏夹名称
 
     # 是否启用 Debug 模式
@@ -173,4 +190,3 @@ if __name__ == "__main__":
 
     # 启动任务
     schedule_task(n, folder, debug=debug_mode)
-
